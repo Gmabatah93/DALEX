@@ -174,7 +174,7 @@ We want to understand the factors that influence a complex black-box model aroun
 **Cons**
 -  the oscillations may not be of help in situations when the use of CP profiles may itself be problematic (e.g., in the case of correlated explanatory variables or interactions – see Section 10.5). An important issue is that the CP-based variable-importance measures (11.1) do not fulfil the local accuracy condition (see Section 8.2), i.e., they do not sum up to the instance prediction for which they are calculated, unlike the break-down attributions (see Chapter 6) or Shapley values (see Chapter 8).
 
-#### Functions
+#### Functions  
 
 name | description | variables
 --- | --- | ---
@@ -184,4 +184,131 @@ predict_profile() | description | explainer, new_observation,
 
 ---
 
-## Dataset-Level
+# Dataset-Level
+
+## Model-Performance
+> Goodness-of-fit / Goodness-of-prediction
+- Model Evaluation: how good is the model _(how reliable are the model predictions)_
+- Model Comparison: compare two or more models in order to choose between them.
+- Out-of_Sample and Out-of-Time Comparison: we may want to check a model’s performance when applied to new data to evaluate if performance has not worsened
+
+**INTUITION**
+- **Calibration:** The extent of bias in predicted values, i.e., the mean difference between the predicted and true values.
+- **Discrimination:** The ability of the predictions to distinguish between individual true values.
+
+### Continuous Dependent Variable
+**Goodness-Of-Fit:**
+
+Mean Squared Error:
+<img src="Images/MSE.PNG" width="300">
+
+Root Mean Squared Error:
+<img src="Images/RMSE.PNG" width="300">
+
+R Squared:
+<img src="Images/R2.PNG" width="300">
+
+### Binary Dependent Variable
+**Goodness-Of-Fit**
+
+Briar Score:
+<img src="Images/BS.PNG" width="300">
+ - 0 = Perfect Model
+ - 0.25 = Unimformative Model
+
+Log-Likelihood:
+<img src="Images/LL.PNG" width="300">
+
+**Goodness-Of-Prediction**
+
+Accuracy:
+<img src="Images/acc.PNG" width="300">
+
+Precision:
+<img src="Images/prec.PNG" width="300">
+-  _useful when the penalty for commiting the Type I is HIGH_
+
+Recall:
+<img src="Images/rec.PNG" width="300">
+
+F1:
+<img src="Images/F1.PNG" width="300">
+
+Lift:
+<img src="Images/Lift.PNG" width="300">
+
+#### PROS & CONS
+
+## Variable-Importance Measeures
+> - Model Simplification: variables that do not influence a model’s predictions may be excluded from the mode
+- Model Exploration: comparison of variables’ importance in different models may help in discovering interrelations between the variables. Also, the ordering of variables in the function of their importance is helpful in deciding in which order should we perform further model exploration
+- Domain-knowledge-based model validation: identification of the most important variables may be helpful in assessing the validity of the model based on domain knowledge.
+- Knowledge generation: identification of the most important variables may lead to the discovery of new factors involved in a particular mechanism.
+- Model Specific / Model-Agnostic
+
+**INTUITION**
+
+Measure how much does a model’s performance change if the effect of a selected explanatory variable, or of a group of variables, is removed? To remove the effect, we use perturbations, like resampling from an empirical distribution or permutation of the values of the variable.
+
+### METHOD
+<img src="Images/VIP_form.PNG" width="700">
+
+### PROS & CONS
+
+**Pros**
+- model-agnostic approach to the assessment of the influence of an explanatory variable on a model’s performance
+- measures can be compared between models and may lead to interesting insights
+
+**Cons**
+- main disadvantage of the permutation-based variable-importance measure is its dependence on the random nature of the permutations. As a result, for different permutations, we will, in general, get different results. Also, the value of the measure depends on the choice of the loss function **L()**. Thus, there is no single, “absolute” measure.
+
+
+## Partial-Dependence-Profiles
+> Show how the expected value of model prediction behave as a function of a selected explanatory variable \
+PD profiles are also useful for comparisons of different models:
+- Agreement between profiles for different models is reassuring
+- Disagreement between profiles may suggest a way to improve a model:
+_If a PD profile of a simpler, more interpretable model disagrees with a profile of a flexible model, this may suggest a variable transformation that can be used to improve the interpretable model_
+- Evaluation of model performance at boundaries
+
+
+**INTUITION**
+
+To show how does the expected value of model prediction behave as a function of a selected explanatory variable, the average of a set of individual ceteris-paribus (CP) profiles can be used. Recall that a CP profile (see Chapter 10) shows the dependence of an instance-level prediction on an explanatory variable. A PD profile is estimated by the mean of the CP profiles for all instances (observations) from a dataset.
+
+<img src="Images/pdp1.PNG" width="700">
+
+### METHOD
+
+**Clustered Partial-Dependence-Profiles**
+
+<img src="Images/pdp2.PNG" width="700">
+
+**Grouped Partial-Dependence-Profiles**
+
+<img src="Images/pdp3.PNG" width="700">
+
+**Contrastive Partial-Dependence-Profiles**
+
+<img src="Images/pdp4.PNG" width="700">
+
+### PROS & CONS
+
+**Pros**
+- simple way to summarize the effect of a particular explanatory variable on the dependent variable.
+- They can be obtained for sub-groups of observations and compared across different models.
+
+**Cons**
+- Given that the PD profiles are averages of CP profiles, they inherit the limitations of the latter. In particular, as CP profiles are problematic for correlated explanatory variables (see Section 10.5), PD profiles are also not suitable for that case, as they may offer a crude and potentially misleading summarization
+
+## Local-dependence and Accumulated-local Profiles
+
+**INTUITION**
+
+
+#### Functions  
+
+name | description | variables
+--- | --- | ---
+model_parts() | des | explainer, loss_function, **type**[raw, difference, ratio], variables, variable_groups, B"number of permutations, N"number of observations that are to be sampled"
+model_profile() | des | explainer, variables, N"number of randomly sampled obs, **type**[partial, conditional, accumulated], variable_type, groups, k"number of clusters"
