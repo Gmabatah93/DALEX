@@ -24,7 +24,7 @@ titanic %>%
 # MODELING: Fit
 tit_mod_log <- glm(survived ~ gender + age + class + sibsp + parch + fare + embarked,
                    data = titanic, family = "binomial")
-tit_mod_rf <- ranger::ranger(factor(survived) ~ gender + age + class + sibsp + parch + fare + embarked,
+tit_mod_rf <- ranger::ranger(survived ~ gender + age + class + sibsp + parch + fare + embarked,
                              data = titanic)
 tit_mod_gbm <- gbm::gbm(survived ~ gender + age + class + sibsp + parch + fare + embarked,
                         data = titanic,
@@ -246,140 +246,32 @@ tit_vip_svm <- model_parts(explainer = tit_exp_svm,
 plot(tit_vip_log, tit_vip_rf, tit_vip_gbm, tit_vip_svm)
 
 # MODEL Evaluation: Partial Dependence
-tit_pd_log <- model_profile(explainer = tit_exp_log)
-tit_pd_rf <- model_profile(explainer = tit_exp_rf)
-tit_pd_gbm <- model_profile(explainer = tit_exp_gbm)
-tit_pd_svm <- model_profile(explainer = tit_exp_svm)
+tit_pdp_rf <- model_profile(explainer = tit_exp_rf,
+                            variables = "age")
 
-tit_pd_log %>% plot(geom = "profiles")
-plot(tit_pd_log, tit_pd_rf, tit_pd_gbm, tit_pd_svm)
-# Groups - Gender
-tit_pd_Gender_log <- model_profile(explainer = tit_exp_log, groups = "gender")
-tit_pd_Gender_rf <- model_profile(explainer = tit_exp_rf, groups = "gender")
-tit_pd_Gender_gbm <- model_profile(explainer = tit_exp_gbm, groups = "gender")
-tit_pd_Gender_svm <- model_profile(explainer = tit_exp_svm, groups = "gender")
+tit_pdp_rf %>% plot(geom = "profiles")
+# - Clustered
+tit_pdp_clus_rf <- model_profile(explainer = tit_exp_rf,
+                                 variables = "age",
+                                 k = 3)
+tit_pdp_clus_rf %>% plot(geom = "profiles")
+# - Group
+tit_pdp_group_rf <- model_profile(explainer = tit_exp_rf,
+                                  variables = "age",
+                                  groups = "gender")
+tit_pdp_group_rf %>% plot(geom = "profiles")
+# - Contrastive
+tit_pdp_log <- model_profile(explainer = tit_exp_log,
+                             variables = "age")
 
-tit_pd_Gender_log %>% plot(variables = c("age","fare","sibsp"), geom = "profiles")
-tit_pd_Gender_rf %>% plot(variables = c("age","fare","sibsp"))
-tit_pd_Gender_gbm %>% plot(variables = c("age","fare","sibsp"))
-tit_pd_Gender_svm %>% plot(variables = c("age","fare","sibsp"))
-# Groups - Class
-tit_pd_Class_log <- model_profile(explainer = tit_exp_log, groups = "class")
-tit_pd_Class_rf <- model_profile(explainer = tit_exp_rf, groups = "class")
-tit_pd_Class_gbm <- model_profile(explainer = tit_exp_gbm, groups = "class")
-tit_pd_Class_svm <- model_profile(explainer = tit_exp_svm, groups = "class")
-
-tit_pd_Class_log %>% plot(variables = c("age","fare","sibsp"))
-tit_pd_Class_rf %>% plot(variables = c("age","fare","sibsp"))
-tit_pd_Class_gbm %>% plot(variables = c("age","fare","sibsp"))
-tit_pd_Class_svm %>% plot(variables = c("age","fare","sibsp"))
-# Groups - Embarked
-tit_pd_Embarked_log <- model_profile(explainer = tit_exp_log, groups = "embarked")
-tit_pd_Embarked_rf <- model_profile(explainer = tit_exp_rf, groups = "embarked")
-tit_pd_Embarked_gbm <- model_profile(explainer = tit_exp_gbm, groups = "embarked")
-tit_pd_Embarked_svm <- model_profile(explainer = tit_exp_svm, groups = "embarked")
-
-tit_pd_Embarked_log %>% plot(variables = c("age","fare","sibsp"))
-tit_pd_Embarked_rf %>% plot(variables = c("age","fare","sibsp"))
-tit_pd_Embarked_gbm %>% plot(variables = c("age","fare","sibsp"))
-tit_pd_Embarked_svm %>% plot(variables = c("age","fare","sibsp"))
-# Clusters
-tit_pd_Cluster_log <- model_profile(explainer = tit_exp_log, k = 3, center = TRUE)
-tit_pd_Cluster_rf <- model_profile(explainer = tit_exp_rf, k = 3, center = TRUE)
-tit_pd_Cluster_gbm <- model_profile(explainer = tit_exp_gbm, k = 3, center = TRUE)
-tit_pd_Cluster_svm <- model_profile(explainer = tit_exp_svm, k = 3, center = TRUE)
-
-tit_pd_Cluster_log %>% plot(geom = "profiles")
-tit_pd_Cluster_rf %>% plot()
-tit_pd_Cluster_gbm %>% plot()
-tit_pd_Cluster_svm %>% plot()
-
-# MODEL Evaluation: Local Dependence
-tit_ld_log <- model_profile(explainer = tit_exp_log, type = "conditional")
-tit_ld_rf <- model_profile(explainer = tit_exp_rf, type = "conditional")
-tit_ld_gbm <- model_profile(explainer = tit_exp_gbm, type = "conditional")
-tit_ld_svm <- model_profile(explainer = tit_exp_svm, type = "conditional")
-
-tit_ld_log %>% plot(geom = "profiles")
-tit_ld_rf %>% plot(geom = "profiles")
-tit_ld_gbm %>% plot(geom = "profiles")
-tit_ld_svm %>% plot(geom = "profiles")
-
-# MODEL Evaluation: Accumulated-Local
-tit_al_log <- model_profile(explainer = tit_exp_log, type = "accumulated")
-tit_al_rf <- model_profile(explainer = tit_exp_rf, type = "accumulated")
-tit_al_gbm <- model_profile(explainer = tit_exp_gbm, type = "accumulated")
-tit_al_svm <- model_profile(explainer = tit_exp_svm, type = "accumulated")
-
-tit_al_log %>% plot(geom = "profiles")
-tit_al_rf %>% plot(geom = "profiles")
-tit_al_gbm %>% plot(geom = "profiles")
-tit_al_svm %>% plot(geom = "profiles")
-
-# MODEL Evaluation: Dependence Summary
-tit_pd_log$`_label_` <- "Partial Dependence"
-tit_pd_rf$`_label_` <- "Partial Dependence" 
-tit_pd_gbm$`_label_` <- "Partial Dependence" 
-tit_pd_svm$`_label_` <- "Partial Dependence" 
-tit_ld_log$`_label_` <- "Local Dependence" 
-tit_ld_rf$`_label_` <- "Local Dependence" 
-tit_ld_gbm$`_label_` <- "Local Dependence"
-tit_ld_svm$`_label_` <- "Local Dependence"
-tit_al_log$`_label_` <- "Accumulated Local" 
-tit_al_rf$`_label_` <- "Accumulated Local" 
-tit_al_gbm$`_label_` <- "Accumulated Local"
-tit_al_svm$`_label_` <- "Accumulated Local"
-
-plot(tit_pd_log)
-plot(tit_pd_log, tit_ld_log)
-plot(tit_pd_log, tit_ld_log, tit_al_log)
-plot(tit_pd_rf)
-plot(tit_pd_rf, tit_ld_rf)
-plot(tit_pd_rf, tit_ld_rf, tit_al_rf)
-
-# MODEL Evaluation: Residual-Diagnostics
-tit_diag_log <- model_diagnostics(explainer = tit_exp_log)
-tit_diag_rf <- model_diagnostics(explainer = tit_exp_rf)
-tit_diag_gbm <- model_diagnostics(explainer = tit_exp_gbm)
-tit_diag_svm <- model_diagnostics(explainer = tit_exp_svm)
-
-# INSTANCE Evaluation:
-Johnny_D <- data.frame(
-  class = factor("1st", levels = c("1st","2nd","3rd","deck crew","engineering crew","restaurant staff","victualling crew")),
-  gender = factor("male", levels = c("female", "male")),
-  age = 8, sibsp = 0, parch = 0, fare = 72,
-  embarked = factor("Southampton", levels = c("Belfast","Cherbourg","Queenstown","Southampton"))
-)
-Henry_E <- data.frame(
-  class = factor("1st", levels = c("1st","2nd","3rd","deck crew", "engineering crew","restaurant staff","victualling crew")),
-  gender = factor("male", levels = c("female", "male")),
-  age = 47, sibsp = 0, parch = 0, fare = 25,
-  embarked = factor("Cherbourg", levels = c("Belfast","Cherbourg","Queenstown","Southampton"))
-)
-
-# Model Evaluation: 
-eval_tit_log <- model_performance(explainer = tit_exp_log)
-eval_tit_rf <- model_performance(explainer = tit_exp_rf)
-plot(eval_tit_log, eval_tit_rf, geom = "histogram")
-plot(eval_tit_log, eval_tit_rf, geom = "roc")
-
-# partial-dependence
-tit_pdp_rf_age <- model_profile(explainer = tit_exp_rf, variables = "age")
-tit_pdp_rf_age %>% plot(geom = "profiles")
-
-tit_pdp_clust_rf_age <- model_profile(explainer = tit_exp_rf, variables = "age", k = 3)
-tit_pdp_clust_rf_age %>% plot(geom = "profiles")
-
-tit_pdp_rf_gender_age <- model_profile(explainer = tit_exp_rf, variables = "age", groups = "gender")
-tit_pdp_rf_gender_age %>% plot(geom = "profiles")
-
-tit_pdp_log_age <- model_profile(explainer = tit_exp_log, variables = "age")
-plot(tit_pdp_rf_age, tit_pdp_log_age)
+plot(tit_pdp_rf, tit_pdp_log)
 
 
 
 
-# APARTMENTS ----
+
+
+# APARTMENTS: DATA ----
 
 # DATA
 apt <- DALEX::apartments %>% as_tibble()
@@ -442,105 +334,40 @@ apt_exp_svm <- explain(model = apt_mod_svm,
                        type = "regression")
 
 
-# Instance-Level
+# APARTMENT: Instance-Level ----
 
-# - break-down "break-down-interaction"
+# APRATMENT: Dataset-Level ----
 
+# Model-Performance
+apt_eval_rf <- model_performance(explainer = apt_exp_rf)
+apt_eval_lm <- model_performance(explainer = apt_exp_lm)
 
+plot(apt_eval_rf, apt_eval_lm, geom = "histogram")
+plot(apt_eval_rf, geom = "prc")
 
+# Variable Importance Measures
+apt_vip_rf <- model_parts(explainer = apt_exp_rf,
+                          loss_function = loss_root_mean_square,
+                          B = 50, 
+                          type = "difference")
 
+apt_vip_lm <- model_parts(explainer = apt_exp_lm,
+                          loss_function = loss_root_mean_square,
+                          B = 50, 
+                          type = "difference")
 
-
-
-
-apt_vip_rf_50 <- model_parts(explainer = apt_exp_rf,
-                             loss_function = loss_root_mean_square,
-                             B = 50,
-                             type = "difference")
-apt_vip_lm_50 <- model_parts(explainer = apt_exp_lm,
-                             loss_function = loss_root_mean_square,
-                             B = 50,
-                             type = "difference")
-apt_vip_svm_50 <- model_parts(explainer = apt_exp_svm,
-                              loss_function = loss_root_mean_square,
-                              B = 50,
-                              type = "difference")
-plot(apt_vip_rf_50, apt_vip_lm_50, apt_vip_svm_50)
-
-#  - partial dependence: Construction Year
-apt_pdp_rf_construct.year <- model_profile(explainer = apt_exp_rf, 
-                                           variables = "construction.year",
-                                           type = "partial")
-apt_pdp_rf_construct.year %>% plot(geom = "profiles")
-
-apt_pdp_lm_construct.year <- model_profile(explainer = apt_exp_lm, 
-                                           variables = "construction.year",
-                                           type = "partial")
-apt_pdp_lm_construct.year %>% plot(geom = "profiles")
-
-apt_pdp_svm_construct.year <- model_profile(explainer = apt_exp_svm, 
-                                            variables = "construction.year",
-                                            type = "partial")
-apt_pdp_svm_construct.year %>% plot(geom = "profiles")
-
-plot(apt_pdp_rf_construct.year,apt_pdp_lm_construct.year,apt_pdp_svm_construct.year)
-# - partial dependence: Surface
-apt_pdp_rf_surface <- model_profile(explainer = apt_exp_rf, 
-                                    variables = "surface",
-                                    type = "partial")
-apt_pdp_rf_surface %>% plot(geom = "profiles")
-
-apt_pdp_lm_surface <- model_profile(explainer = apt_exp_lm, 
-                                    variables = "surface",
-                                    type = "partial")
-apt_pdp_lm_surface %>% plot(geom = "profiles")
-
-apt_pdp_svm_surface <- model_profile(explainer = apt_exp_svm, 
-                                     variables = "surface",
-                                     type = "partial")
-apt_pdp_svm_surface %>% plot(geom = "profiles")
-
-plot(apt_pdp_rf_surface,apt_pdp_lm_surface,apt_pdp_svm_surface)
-# - partial dependence: District
-apt_pdp_rf_district <- model_profile(explainer = apt_exp_rf, 
-                                     variables = c("construction.year","surface"),
-                                     groups = "district",
-                                     type = "partial")
-apt_pdp_rf_district %>% plot(geom = "profiles")
-apt_pdp_lm_district <- model_profile(explainer = apt_exp_lm, 
-                                     variables = c("construction.year","surface"),
-                                     groups = "district",
-                                     type = "partial")
-apt_pdp_lm_district %>% plot(geom = "profiles")
-apt_pdp_svm_district <- model_profile(explainer = apt_exp_svm, 
-                                      variables = c("construction.year","surface"),
-                                      groups = "district",
-                                      type = "partial")
-apt_pdp_svm_district %>% plot(geom = "profiles")
-
-plot(apt_pdp_rf_district, apt_pdp_lm_district, apt_pdp_svm_district)
-
-# local dependence and accumulated-local profiles
-ld_apt_rf <- model_profile(explainer = apt_exp_rf,
-                           type = "conditional",
-                           variables = c("no.rooms","surface"))
-ld_apt_rf %>% plot()
-
-al_apt_rf <- model_profile(explainer = apt_exp_rf,
-                           type = "accumulated",
-                           variables = c("no.rooms","surface"))
-al_apt_rf %>% plot()
-
-pd_apt_rf <- model_profile(explainer = apt_exp_rf,
-                           type = "partial",
-                           variables = c("no.rooms","surface"))#
-
-pd_apt_rf$`_label_` <- "partial dependence"
-ld_apt_rf$`_label_` <- "local dependence"
-al_apt_rf$`_label_` <- "accumulated local"
-plot(pd_apt_rf, ld_apt_rf, al_apt_rf)
+apt_vip_svm <- model_parts(explainer = apt_exp_svm,
+                           loss_function = loss_root_mean_square,
+                           B = 50, 
+                           type = "difference")
 
 
+plot(apt_vip_rf, apt_vip_lm, apt_vip_svm)
+
+
+# Partial Dependence Profile
+
+#
 # - DALEX: Fifa ----
 fifa %>% skimr::skim()
 # eda - Single Variable
