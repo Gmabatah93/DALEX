@@ -306,9 +306,34 @@ To show how does the expected value of model prediction behave as a function of 
 **INTUITION**
 
 
+## Residual-diagnostics Plots
+
+**INTUITION**
+
+ We primarily focus on models describing the expected value of the dependent variable as a function of explanatory variables. In such a case, for a “perfect” predictive model, the predicted value of the dependent variable should be exactly equal to the actual value of the variable for every observation. Perfect prediction is rarely, if ever, expected. In practice, we want the predictions to be reasonably close to the actual values. This suggests that we can use the difference between the predicted and the actual value of the dependent variable to quantify the quality of predictions obtained from a model. The difference is called a residual.
+
+ For a single observation, residual will almost always be different from zero. While a large (absolute) value of a residual may indicate a problem with a prediction for a particular observation, it does not mean that the quality of predictions obtained from a model is unsatisfactory in general. To evaluate the quality, we should investigate the “behavior” of residuals for a group of observations. In other words, we should look at the distribution of the values of residuals.
+
+### METHOD
+
+<img src="Images/residual.PNG" width="300">
+
+<img src="Images/s_residual.PNG" width="300">
+
+### PROS & CONS
+
+**Pros**
+- Allow identifying different types of issues with model fit or prediction, such as problems with distributional assumptions or with the assumed structure of the model (in terms of the selection of the explanatory variables and their form).
+- The methods can help in detecting groups of observations for which a model’s predictions are biased and, hence, require inspection.
+
+**Cons**
+-
+
 #### Functions  
 
 name | description | variables
 --- | --- | ---
 model_parts() | des | explainer, loss_function, **type**[raw, difference, ratio], variables, variable_groups, B"number of permutations, N"number of observations that are to be sampled"
 model_profile() | des | explainer, variables, N"number of randomly sampled obs, **type**[partial, conditional, accumulated], variable_type, groups, k"number of clusters"
+model_performance() | desc | explainer
+model_diagnostics() | desc | explainer, y, y_hat, obs, residuals, abs_residuals

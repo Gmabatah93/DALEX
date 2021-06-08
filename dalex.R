@@ -263,12 +263,14 @@ tit_pdp_group_rf %>% plot(geom = "profiles")
 # - Contrastive
 tit_pdp_log <- model_profile(explainer = tit_exp_log,
                              variables = "age")
-
 plot(tit_pdp_rf, tit_pdp_log)
 
 
 
 
+# Local-dependence and Accumulated-local Profiles
+
+# Residual Diagnostic
 
 
 # APARTMENTS: DATA ----
@@ -367,6 +369,20 @@ plot(apt_vip_rf, apt_vip_lm, apt_vip_svm)
 
 # Partial Dependence Profile
 
+# Residual Diagnostic
+apt_mr_lm <- model_performance(explainer = apt_exp_lm)
+apt_mr_rf <- model_performance(explainer = apt_exp_rf)
+
+plot(apt_mr_lm, apt_mr_rf, geom = "histogram")
+plot(apt_mr_lm, apt_mr_rf, geom = "boxplot")
+
+apt_md_lm <- model_diagnostics(explainer = apt_exp_lm)
+apt_md_rf <- model_diagnostics(explainer = apt_exp_rf)
+
+plot(apt_md_rf, variable = "y", yvariable = "residuals")
+plot(apt_md_rf, variable = "y", yvariable = "y_hat")
+plot(apt_md_rf, variable = "ids", yvariable = "residuals")
+plot(apt_md_rf, variable = "y_hat", yvariable = "abs_residuals")
 #
 # - DALEX: Fifa ----
 fifa %>% skimr::skim()
