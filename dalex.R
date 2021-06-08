@@ -383,109 +383,57 @@ plot(apt_md_rf, variable = "y", yvariable = "residuals")
 plot(apt_md_rf, variable = "y", yvariable = "y_hat")
 plot(apt_md_rf, variable = "ids", yvariable = "residuals")
 plot(apt_md_rf, variable = "y_hat", yvariable = "abs_residuals")
+
 #
-# - DALEX: Fifa ----
+# FIFA: DAtA ----
+
+# EDA
+# - summary
 fifa %>% skimr::skim()
-# eda - Single Variable
-fifa %>% ggplot(aes(log(value_eur))) + geom_histogram() 
-fifa %>% ggplot(aes(age)) + geom_histogram()
-fifa %>% ggplot(aes(movement_reactions)) + geom_histogram()
-fifa %>% ggplot(aes(skill_ball_control)) + geom_histogram()
-fifa %>% ggplot(aes(skill_dribbling)) + geom_histogram()
-# eda - Bivariate
-fifa %>% mutate(value_eur = log(value_eur)) %>% 
-  select(value_eur, age, movement_reactions, skill_ball_control, skill_dribbling) %>% cor() %>% 
-  corrplot::corrplot(method = "number", type = "upper")
-fifa %>% ggplot(aes(age, log(value_eur))) + geom_point() + geom_smooth()
-fifa %>% ggplot(aes(movement_reactions, log(value_eur))) + geom_point() + geom_smooth()
-fifa %>% ggplot(aes(skill_ball_control, log(value_eur))) + geom_point() + geom_smooth()
-fifa %>% ggplot(aes(skill_dribbling, log(value_eur))) + geom_point() + geom_smooth()
+# - target
+fifa %>% 
+  ggplot(aes(log10(value_eur))) +
+  geom_histogram(bins = 100)
+fifa %>% 
+  ggplot(aes(age, log10(value_eur))) +
+  geom_point() +
+  geom_smooth()
+fifa %>% 
+  ggplot(aes(skill_ball_control, log10(value_eur))) +
+  geom_point() +
+  geom_smooth()
+fifa %>% 
+  ggplot(aes(skill_dribbling, log10(value_eur))) +
+  geom_point() +
+  geom_smooth()
+fifa %>% 
+  ggplot(aes(movement_reactions, log10(value_eur))) +
+  geom_point() +
+  geom_smooth()
 
-# MODEL: Preprocess
+# MODELING
+# - data
+fifa$value_eur_Log <- log10(fifa$value_eur)
 fifa_small <- fifa %>% 
-  mutate(log_value_eur = log10(value_eur)) %>% 
-  select(-nationality, -overall, -potential, -value_eur, -wage_eur)
-# MODEL: Fit
-fifa_mod_lm <- lm(log_value_eur ~ ., data = fifa_small)
-fifa_mod_rf <- ranger(log_value_eur ~ ., data = fifa_small,
-                      num.trees = 250)
-fifa_mod_gbm1 <- gbm(log_value_eur ~ ., data = fifa_small, 
-                     n.trees = 250, interaction.depth = 1, distribution = "gaussian")
-fifa_mod_gbm4 <- gbm(log_value_eur ~ ., data = fifa_small, 
-                     n.trees = 250, interaction.depth = 4, distribution = "gaussian")
-# MODEL: Explainer
-predict_10 <- function(m,x) {
-  10^predict(m,x)
-}
-predict_gbm <- function(m,x) {
-  10^predict(m,x, n.trees = 250)
-}
-predict_ranger <- function(m,x) {
-  10^predictions(predict(m,x))
-}
+  select(-c("value_eur","wage_eur","overall","potential"))
+# - fit
+fifa_gbm_deep <- gbm::gbm(value_eur_Log ~ ., data = fifa_small,
+                          n.trees = 250, 
+                          interaction.depth = 4, 
+                          distribution = "gaussian")
+# - explainer 
+fifa_gbm_exp_deep <- explain(fifa_gbm_deep, 
+                            data = fifa_small, 
+                            y = 10^fifa_small$value_eur_Log, 
+                            predict_function = function(m,x) 10^predict(m, x, n.trees = 250),
+                            label = "GBM deep")
+# FIFA: Dataset level ----
 
-fifa_exp_lm <- explain(model = fifa_mod_lm, 
-                       data = fifa_small,
-                       y = 10^fifa_small$log_value_eur,
-                       predict_function = predict_10,
-                       type = "regression",
-                       label = "Linear Regression")
-fifa_exp_rf <- explain(model = fifa_mod_rf, 
-                       data = fifa_small,
-                       y = 10^fifa_small$log_value_eur,
-                       predict_function = predict_ranger,
-                       type = "regression",
-                       label = "Random Forrest")
-fifa_exp_gbm1 <- explain(model = fifa_mod_gbm1,
-                         data = fifa_small,
-                         y = 10^fifa_small$log_value_eur,
-                         predict_function = predict_gbm,
-                         type = "regression",
-                         label = "GBM 1")
-fifa_exp_gbm4 <- explain(model = fifa_mod_gbm4,
-                         data = fifa_small,
-                         y = 10^fifa_small$log_value_eur,
-                         predict_function = predict_gbm,
-                         type = "regression",
-                         label = "GBM 4")
-
-# MODEL Evaluation: Performance
-fifa_perf_lm <- model_performance(explainer = fifa_exp_lm)
-fifa_perf_rf <- model_performance(explainer = fifa_exp_rf)
-fifa_perf_gbm1 <- model_performance(explainer = fifa_exp_gbm1)
-fifa_perf_gbm4 <- model_performance(explainer = fifa_exp_gbm4)
-
-plot(fifa_perf_lm, fifa_perf_rf, fifa_perf_gbm1, fifa_perf_gbm4,
-     geom = "boxplot")
-# MODEL Evaluation: Diagnostics
-# c('y','y_hat','ids','residuals','abs_residuals')
-fifa_diag_lm <- model_diagnostics(explainer = fifa_exp_lm)
-fifa_diag_rf <- model_diagnostics(explainer = fifa_exp_rf)
-fifa_diag_gbm1 <- model_diagnostics(explainer = fifa_exp_gbm1)
-fifa_diag_gbm4 <- model_diagnostics(explainer = fifa_exp_gbm4)
-
-plot(fifa_diag_lm, fifa_diag_rf, fifa_diag_gbm1, fifa_diag_gbm4,
-     variable = "y", yvariable = "y_hat") +
+# Model-Performance
+fifa_mp_deep <- model_performance(explainer = fifa_gbm_exp_deep)
+fifa_md_deep <- model_diagnostics(explainer = fifa_gbm_exp_deep)
+fifa_md_deep %>% 
+  plot(variable = "y", yvariable = "y_hat") +
   scale_x_continuous("Value in Euro", trans = "log10") +
-  scale_y_continuous("Predicted Value in Euro", trans = "log10") +
-  geom_abline(slope = 1) +
-  facet_wrap(~label)
-# MODEL Evaluation: Feature Importance
-fifa_vip_lm <- model_parts(fifa_exp_lm)
-fifa_vip_rf <- model_parts(fifa_exp_rf)
-fifa_vip_gbm1 <- model_parts(fifa_exp_gbm1)
-fifa_vip_gbm4 <- model_parts(fifa_exp_gbm4)
-
-plot(fifa_vip_lm, fifa_vip_rf, fifa_vip_gbm1, fifa_vip_gbm4,
-     max_vars = 15, show_boxplots = FALSE)
-# Partial Dependence
-feats <- c("movement_reactions", "skill_ball_control", "skill_dribbling", "age")
-
-fifa_pd_lm <- model_profile(fifa_exp_lm)
-fifa_pd_rf <- model_profile(fifa_exp_rf)
-fifa_pd_gbm1 <- model_profile(fifa_exp_gbm1)
-fifa_pd_gbm4 <- model_profile(fifa_exp_gbm4)
-
-plot(fifa_pd_lm, fifa_pd_rf, fifa_pd_gbm1, fifa_pd_gbm4,
-     variables = feats)
-
+  scale_y_continuous("Predicted value in Euro", trans = "log10") +
+  geom_abline(slope = 1)
