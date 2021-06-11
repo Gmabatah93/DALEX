@@ -99,7 +99,8 @@ Lift:
 
 **INTUITION**
 
-Measure how much does a model’s performance change if the effect of a selected explanatory variable, or of a group of variables, is removed? To remove the effect, we use perturbations, like resampling from an empirical distribution or permutation of the values of the variable.
+How much does a model’s performance change if the effect of a selected explanatory variable, or of a group of variables, is removed? To remove the effect, we use perturbations, like resampling from an empirical distribution or permutation of the values of the variable.\
+ _(If a variable is important, then we expect that, after permuting the values of the variable, the model’s performance will worsen. The larger the change in the performance, the more important is the variable)_.
 
 ### METHOD
 <img src="Images/VIP_form.PNG" width="700">
@@ -125,7 +126,7 @@ _If a PD profile of a simpler, more interpretable model disagrees with a profile
 
 **INTUITION**
 
-To show how does the expected value of model prediction behave as a function of a selected explanatory variable, the average of a set of individual ceteris-paribus (CP) profiles can be used. Recall that a CP profile (see Chapter 10) shows the dependence of an instance-level prediction on an explanatory variable. A PD profile is estimated by the mean of the CP profiles for all instances (observations) from a dataset.
+To show how does the expected value of model prediction behave as a function of a selected explanatory variable, the **_average of a set of individual ceteris-paribus (CP) profiles_** can be used. Recall that a CP profile (see Chapter 10) shows the dependence of an instance-level prediction on an explanatory variable. A PD profile is estimated by the mean of the CP profiles for all instances (observations) from a dataset.
 
 <img src="Images/pdp1.PNG" width="700">
 
