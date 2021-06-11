@@ -385,7 +385,7 @@ plot(apt_md_rf, variable = "ids", yvariable = "residuals")
 plot(apt_md_rf, variable = "y_hat", yvariable = "abs_residuals")
 
 #
-# FIFA: DAtA ----
+# FIFA: Data ----
 
 # EDA
 # - summary
@@ -417,23 +417,167 @@ fifa$value_eur_Log <- log10(fifa$value_eur)
 fifa_small <- fifa %>% 
   select(-c("value_eur","wage_eur","overall","potential"))
 # - fit
+fifa_lm <- lm(value_eur_Log ~ ., data = fifa_small)
 fifa_gbm_deep <- gbm::gbm(value_eur_Log ~ ., data = fifa_small,
                           n.trees = 250, 
                           interaction.depth = 4, 
                           distribution = "gaussian")
 # - explainer 
+fifa_lm_exp <- explain(fifa_lm, 
+                       data = fifa_small, 
+                       y = 10^fifa_small$value_eur_Log, 
+                       predict_function = function(m,x) 10^predict(m, x),
+                       label = "Linear Model")
 fifa_gbm_exp_deep <- explain(fifa_gbm_deep, 
                             data = fifa_small, 
                             y = 10^fifa_small$value_eur_Log, 
                             predict_function = function(m,x) 10^predict(m, x, n.trees = 250),
                             label = "GBM deep")
-# FIFA: Dataset level ----
+# FIFA: Dataset-Level ----
 
 # Model-Performance
 fifa_mp_deep <- model_performance(explainer = fifa_gbm_exp_deep)
+fifa_mp_lm <- model_performance(explainer = fifa_lm_exp)
 fifa_md_deep <- model_diagnostics(explainer = fifa_gbm_exp_deep)
+fifa_md_lm <- model_diagnostics(explainer = fifa_lm_exp)
+
 fifa_md_deep %>% 
   plot(variable = "y", yvariable = "y_hat") +
   scale_x_continuous("Value in Euro", trans = "log10") +
   scale_y_continuous("Predicted value in Euro", trans = "log10") +
   geom_abline(slope = 1)
+
+fifa_md_lm %>% 
+  plot(variable = "y", yvariable = "y_hat") +
+  scale_x_continuous("Value in Euro", trans = "log10") +
+  scale_y_continuous("Predicted value in Euro", trans = "log10") +
+  geom_abline(slope = 1)
+
+# Variable Importance
+fifa_vip_lm <- model_parts(explainer = fifa_lm_exp)
+fifa_vip_gbm <- model_parts(explainer = fifa_gbm_exp_deep)
+
+plot(fifa_vip_lm, fifa_vip_gbm,
+     max_vars = 20, show_boxplots = FALSE)
+
+variables <- c("movement_reactions","skill_ball_control","age")
+fifa_pd_lm <- model_profile(explainer = fifa_lm_exp, variables = variables)
+fifa_pd_gbm <- model_profile(explainer = fifa_gbm_exp_deep, variables = variables)
+
+plot(fifa_pd_lm, fifa_pd_gbm)
+
+# FIFA: Instance-Level ----
+
+# Robert Lewandowski
+
+# - break-down
+fifa_bd_lm <- predict_parts(explainer = fifa_lm_exp,
+                            new_observation = fifa_small["R. Lewandowski",],
+                             type = "break_down")
+fifa_bd_gbm <- predict_parts(explainer = fifa_gbm_exp_deep,
+                             new_observation = fifa_small["R. Lewandowski",],
+                             type = "break_down")
+
+plot(fifa_bd_lm) +
+  scale_y_continuous("Predicted value in Euro",
+                     labels = scales::dollar_format(suffix = "€", prefix = ""))
+plot(fifa_bd_gbm) +
+  scale_y_continuous("Predicted value in Euro",
+                     labels = scales::dollar_format(suffix = "€", prefix = ""))
+
+
+fifa_shap_lm <- predict_parts(explainer = fifa_lm_exp,
+                              new_observation = fifa_small["R. Lewandowski",],
+                              type = "shap")
+fifa_shap_gbm <- predict_parts(explainer = fifa_gbm_exp_deep,
+                               new_observation = fifa_small["R. Lewandowski",],
+                               type = "shap")
+plot(fifa_shap_lm) +
+  scale_y_continuous("Predicted value in Euro",
+                     labels = scales::dollar_format(suffix = "€", prefix = ""))
+
+plot(fifa_shap_gbm) +
+  scale_y_continuous("Predicted value in Euro",
+                     labels = scales::dollar_format(suffix = "€", prefix = ""))
+
+# - ceteris-paribus profiles
+fifa_cp_lm <- predict_profile(explainer = fifa_lm_exp,
+                              new_observation = fifa_small["R. Lewandowski",],
+                              variables = variables)
+fifa_cp_gbm <- predict_profile(explainer = fifa_gbm_exp_deep,
+                               new_observation = fifa_small["R. Lewandowski",],
+                               variables = variables)
+
+plot(fifa_cp_lm, fifa_cp_gbm,
+     variables = variables) +
+  scale_y_continuous("Predicted value in Euro",
+                     labels = scales::dollar_format(suffix = "€", prefix = ""))
+
+# - local-diagnostics
+id_gbm <- predict_diagnostics(explainer = fifa_lm_exp,
+                              new_observation = fifa_small["R. Lewandowski",],
+                              neighbors = 30)
+id_lm <- predict_diagnostics(explainer = fifa_gbm_exp_deep,
+                             new_observation = fifa_small["R. Lewandowski",],
+                             neighbors = 30)
+
+plot(id_gbm) +
+  scale_y_continuous("Predicted value in Euro",
+                     labels = scales::dollar_format(suffix = "€", prefix = ""))
+
+# Cristiano Ronaldo
+
+# - break-down
+fifa_bd_lm_CR7 <- predict_parts(explainer = fifa_lm_exp,
+                                new_observation = fifa_small["Cristiano Ronaldo",],
+                                type = "break_down")
+fifa_bd_gbm_CR7 <- predict_parts(explainer = fifa_gbm_exp_deep,
+                                 new_observation = fifa_small["Cristiano Ronaldo",],
+                                 type = "break_down")
+
+plot(fifa_bd_lm_CR7) +
+  scale_y_continuous("Predicted value in Euro",
+                     labels = scales::dollar_format(suffix = "€", prefix = ""))
+plot(fifa_bd_gbm_CR7) +
+  scale_y_continuous("Predicted value in Euro",
+                     labels = scales::dollar_format(suffix = "€", prefix = ""))
+
+
+fifa_shap_lm_CR7 <- predict_parts(explainer = fifa_lm_exp,
+                              new_observation = fifa_small["Cristiano Ronaldo",],
+                              type = "shap")
+fifa_shap_gbm_CR7 <- predict_parts(explainer = fifa_gbm_exp_deep,
+                               new_observation = fifa_small["Cristiano Ronaldo",],
+                               type = "shap")
+plot(fifa_shap_lm_CR7) +
+  scale_y_continuous("Predicted value in Euro",
+                     labels = scales::dollar_format(suffix = "€", prefix = ""))
+
+plot(fifa_shap_gbm_CR7) +
+  scale_y_continuous("Predicted value in Euro",
+                     labels = scales::dollar_format(suffix = "€", prefix = ""))
+
+# - ceteris-paribus profiles
+fifa_cp_lm_CR7 <- predict_profile(explainer = fifa_lm_exp,
+                              new_observation = fifa_small["R. Lewandowski",],
+                              variables = variables)
+fifa_cp_gbm_CR7 <- predict_profile(explainer = fifa_gbm_exp_deep,
+                               new_observation = fifa_small["R. Lewandowski",],
+                               variables = variables)
+
+plot(fifa_cp_lm_CR7, fifa_cp_gbm_CR7,
+     variables = variables) +
+  scale_y_continuous("Predicted value in Euro",
+                     labels = scales::dollar_format(suffix = "€", prefix = ""))
+
+# - local-diagnostics
+id_gbm_CR7 <- predict_diagnostics(explainer = fifa_lm_exp,
+                              new_observation = fifa_small["R. Lewandowski",],
+                              neighbors = 30)
+id_lm_CR7 <- predict_diagnostics(explainer = fifa_gbm_exp_deep,
+                             new_observation = fifa_small["R. Lewandowski",],
+                             neighbors = 30)
+
+plot(id_gbm_CR7) +
+  scale_y_continuous("Predicted value in Euro",
+                     labels = scales::dollar_format(suffix = "€", prefix = ""))
