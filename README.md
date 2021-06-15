@@ -193,9 +193,11 @@ model_diagnostics() | desc | explainer, y, y_hat, obs, residuals, abs_residuals
 ---
 
 # Instance-Level
+<img src="Images/instance.PNG" width="700">
+
 > Understand how a model yields a prediction for a particular single observation. We may consider the following situations as examples:
 - Evaluate effects of explanatory variables on the model’s predictions
-- How would the model’s predictions change if values of some of the explanatory variables changed
+- How would the model’s predictions change if the values of some of the explanatory variables changed
 - We may discover that the model is providing incorrect predictions, and we may want to find the reason
 
 ## Break-Down Plots:
