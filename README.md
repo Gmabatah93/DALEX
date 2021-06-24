@@ -126,11 +126,13 @@ We want to understand the factors that influence a complex black-box model aroun
 - high-dimensional data, data points are sparse. Defining a “local neighborhood” of the instance of interest may not be straightforward. Importance of the selection of the neighborhood is discussed, for example, by Alvarez-Melis and Jaakkola (2018). Sometimes even slight changes in the neighborhood strongly affect the obtained explanations.
 
 ## Ceteris-paribus Profiles "other things held constant"
-> show how a model’s prediction would change if the value of a single exploratory variable changed
+> Shows how a model’s prediction would change if the value of a single exploratory variable changed
 
 
 **INTUITION**
 
+ In essence, a CP profile shows the dependence of the conditional expectation of the dependent variable (response) on the values of the particular explanatory variable.
+ 
 <img src="Images/cp1.PNG" width="700">
 <img src="Images/cp2.PNG" width="700">
 
